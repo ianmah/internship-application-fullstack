@@ -1,24 +1,15 @@
 const API_URL = 'https://cfw-takehome.developers.workers.dev/api/'
 
 addEventListener('fetch', event => {
-  event.respondWith(handleRequest())
+  event.respondWith(handleRequest(event))
 })
 
-class TitleHandler {
-  element(element) {
-    element.setInnerContent('Please Hire Ian Mah');
+class ElementHandler {
+  constructor(string) {
+    this.string = string
   }
-}
-
-class HeaderHandler {
   element(element) {
-    element.setInnerContent('To Whom It May Concern');
-  }
-}
-
-class DescriptionHandler {
-  element(element) {
-    element.setInnerContent('Please hire Ian Mah.');
+    element.setInnerContent(this.string);
   }
 }
 
@@ -32,7 +23,14 @@ class UrlHandler {
 /**
  * Respond with random variant
  */
-async function handleRequest() {
+async function handleRequest(event) {
+
+  let variant, cookieValue
+
+  const cookieString = event.request.headers.get('Cookie')
+  if (cookieString) {
+    cookieValue = getCookie(cookieString, 'variant')
+  }
 
   return await fetch(API_URL + 'variants')
     .then(function (response) {
@@ -40,21 +38,40 @@ async function handleRequest() {
     })
     .then(function (response) {
       const { variants } = response
-      const randomIndex = getRandomInt(2)
-      const url = variants[randomIndex]
+      variant = cookieValue ? cookieValue : getVariantIndex()
+      const url = variants[variant]
       return fetch(url)
     })
-    .then(function (data) {
-      return new HTMLRewriter()
-        .on('title', new TitleHandler())
-        .on('h1#title', new HeaderHandler())
-        .on('p#description', new DescriptionHandler())
-        .on('a#url', new UrlHandler())
-        .transform(data)
+    .then(function (content) {
+      const variation = variant
+        ? new HTMLRewriter()
+          .on('title', new ElementHandler('Please Hire'))
+          .on('h1#title', new ElementHandler('To Whom It May Concern'))
+          .on('p#description', new ElementHandler('Please hire Ian Mah.'))
+          .on('a#url', new UrlHandler())
+        : new HTMLRewriter()
+          .on('title', new ElementHandler('Please Hire'))
+          .on('h1#title', new ElementHandler('Dear Hiring Staff'))
+          .on('p#description', new ElementHandler('Please hire Ian Mah.'))
+          .on('a#url', new UrlHandler())
+      return variation.transform(content).text()
+    })
+    .then(function (html) {
+      return new Response(html, {
+        headers: {
+          'content-type': 'text/html',
+          'Set-Cookie': `variant=${variant}`
+        }
+      });
     })
 
-  function getRandomInt(max) {
-    return Math.floor(Math.random() * max);
-  }
+}
 
+function getVariantIndex() {
+  return (Math.random() < 0.5) ? 0 : 1
+}
+
+function getCookie(cookieString, name) {
+  var match = cookieString.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  if (match) return match[2];
 }
