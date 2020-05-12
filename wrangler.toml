@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 name = "pleasehire"
 type = "javascript"
 account_id = "3a4d09d4849f8588ce3da46dde627ad5"
@@ -9,3 +10,11 @@ zone_id = "0123e91c473f9eceac149fcfe3a10d92"
 account_id = "3a4d09d4849f8588ce3da46dde627ad5"
 # The route pattern your Workers application will be served at
 route = "*pleasehire.ianmah.com/*"
+=======
+name = "{{project-name}}"
+type = "javascript"
+account_id = ""
+workers_dev = true
+route = ""
+zone_id = ""
+>>>>>>> 2d8f78217091122ce4897a98bbb49eebe39ddb5d
